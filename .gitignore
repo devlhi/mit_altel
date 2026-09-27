@@ -1,0 +1,17 @@
+# Data & backup internal — JANGAN ikut jika repo dibagikan
+.audit/
+backend/data/
+backend/api.log
+backend/isp-api.exe
+backend/isp-api.next.exe
+*.log
+
+# Build artifacts
+frontend/node_modules/
+frontend/.nuxt/
+frontend/.output/
+frontend/dist/
+
+# OS
+Thumbs.db
+.DS_Store

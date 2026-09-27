@@ -1,0 +1,23 @@
+<script setup lang="ts">
+const section = ref<HTMLElement | null>(null)
+const route = useRoute()
+const form = ref<any>(null), loading = ref(true), error = ref(''), saving = ref(false), key = ref(''), clearKey = ref(false)
+async function load() { loading.value = true; error.value = ''; try { form.value = await api('/api/whatsapp/settings') } catch (e) { error.value = errMsg(e) } finally { loading.value = false } }
+onMounted(async () => { await load(); await nextTick(); if (route.hash === '#mpwa') section.value?.scrollIntoView({ block: 'start' }) })
+async function save() { if (saving.value) return; saving.value = true; try { form.value = await api('/api/whatsapp/settings', { method: 'PUT', body: { ...form.value, api_key: key.value, clear_key: clearKey.value } }); key.value = ''; clearKey.value = false; toast('Pengaturan MPWA disimpan') } catch (e) { toast(errMsg(e), 'error') } finally { saving.value = false } }
+</script>
+<template>
+  <section id="mpwa" ref="section" class="card" style="margin-top:24px;scroll-margin-top:100px"><div class="op-panel-head"><div><h3>WhatsApp gateway · MPWA</h3><p class="cell-sub" style="margin-top:6px">Kirim invoice, pengingat pembayaran, PKS, dan FAB dari aplikasi.</p></div><NuxtLink class="btn btn-sec btn-sm" to="/whatsapp">Riwayat pengiriman</NuxtLink></div>
+    <div v-if="loading" class="empty">Memuat pengaturan MPWA…</div><div v-else-if="error" class="op-note op-warning">{{ error }} <button class="btn btn-sec" @click="load">Coba lagi</button></div>
+    <form v-else-if="form" class="op-body" @submit.prevent="save"><fieldset :disabled="saving" class="wa-fieldset"><div class="grid-form">
+      <div class="field full"><label class="wa-checkbox"><input v-model="form.enabled" type="checkbox"> Aktifkan pengiriman melalui MPWA</label><span class="hint">Menyimpan pengaturan tidak mengirim pesan. Sender harus sudah terhubung di MPWA.</span></div>
+      <div class="field"><label for="mpwa-url">URL API MPWA</label><input id="mpwa-url" v-model.trim="form.base_url" class="ctrl" type="url" :required="form.enabled" placeholder="https://wa.perusahaan.co.id"><span class="hint">Alamat dasar API, tanpa /send-message. Jika instalasi memakai /api, sertakan /api di akhir URL.</span></div>
+      <div class="field"><label for="mpwa-sender">Nomor sender</label><input id="mpwa-sender" v-model.trim="form.sender" class="ctrl" type="tel" :required="form.enabled" placeholder="628xxxxxxxxxx"><span class="hint">Nomor perangkat yang terhubung pada gateway.</span></div>
+      <div class="field"><label for="mpwa-key">API key</label><input id="mpwa-key" v-model="key" class="ctrl" type="password" autocomplete="new-password" :placeholder="form.has_api_key ? 'Kunci tersimpan; kosongkan untuk mempertahankan' : 'Masukkan API key dari MPWA'"><label v-if="form.has_api_key" class="wa-checkbox hint"><input v-model="clearKey" type="checkbox"> Hapus kunci yang tersimpan</label><span class="hint">Disimpan terenkripsi di server dan tidak ditampilkan kembali.</span></div>
+      <div class="field"><label for="mpwa-public">URL publik aplikasi ISP</label><input id="mpwa-public" v-model.trim="form.public_url" class="ctrl" type="url" placeholder="https://billing.perusahaan.co.id"><span class="hint">Opsional untuk pesan teks; diperlukan untuk tautan invoice dan lampiran PDF. Domain ini harus mengarah ke aplikasi ISP dan bisa diakses penerima serta MPWA.</span></div>
+      <div class="field"><label for="mpwa-invoice-template">Template invoice</label><textarea id="mpwa-invoice-template" v-model="form.invoice_template" class="ctrl" rows="10" maxlength="6000" required></textarea><span class="hint" v-text="'Isian: {{nama}}, {{nomor}}, {{perusahaan}}, {{periode}}, {{total}}, {{status}}, {{sisa}}, {{rekening}}'"></span></div>
+      <div class="field"><label for="mpwa-document-template">Template PKS / FAB</label><textarea id="mpwa-document-template" v-model="form.document_template" class="ctrl" rows="10" maxlength="6000" required></textarea><span class="hint" v-text="'Isian: {{nama}}, {{nomor}}, {{perusahaan}}, {{jenis}}, {{tanggal}}, {{ringkasan}}'"></span></div>
+    </div><div class="op-actions"><button class="btn btn-primary" :disabled="saving">{{ saving ? 'Menyimpan…' : 'Simpan MPWA' }}</button><a class="op-link" href="https://docwa.m-pedia.my.id/docs/wa-gateway-md/v5.5.0/example-api-class?lang=id" target="_blank" rel="noopener">Dokumentasi API MPWA</a></div></fieldset></form>
+  </section>
+</template>
+<style scoped>.wa-fieldset{padding:0;border:0;min-width:0}.wa-checkbox{display:flex;align-items:center;gap:8px;line-height:1.6}.wa-checkbox input{accent-color:#195fd1}.hint{overflow-wrap:anywhere}</style>

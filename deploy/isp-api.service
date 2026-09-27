@@ -1,0 +1,15 @@
+[Unit]
+Description=Aplikasi Manajemen ISP (Golang API + Frontend)
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/isp-app
+ExecStart=/opt/isp-app/isp-api -addr 127.0.0.1:8080 -db /opt/isp-app/data/isp.db -static /opt/isp-app/web
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
